@@ -453,8 +453,12 @@ static void kgsl_count_hw_fences(struct kgsl_drawobj_sync_event *event, struct d
 
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 static void kgsl_get_fence_info(struct dma_fence *fence,
 	struct event_fence_info *info_ptr, void *priv)
+#else
+static void kgsl_get_fence_info(struct dma_fence *fence, void *priv)
+#endif
 {
 	unsigned int num_fences;
 	struct dma_fence **fences;
@@ -472,6 +476,7 @@ static void kgsl_get_fence_info(struct dma_fence *fence,
 		fences = &fence;
 	}
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	if (!info_ptr)
 		goto count;
 
@@ -503,12 +508,20 @@ static void kgsl_get_fence_info(struct dma_fence *fence,
 
 	return;
 count:
+
+#endif
+
 	for (i = 0; i < num_fences; i++)
 		kgsl_count_hw_fences(event, fences[i]);
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
 	bool (*func)(void *priv), void *priv, struct event_fence_info *info_ptr)
+#else
+struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
+	bool (*func)(void *priv), void *priv)
+#endif
 {
 	struct kgsl_sync_fence_cb *kcb;
 	struct dma_fence *fence;
@@ -529,7 +542,11 @@ struct kgsl_sync_fence_cb *kgsl_sync_fence_async_wait(int fd,
 	kcb->priv = priv;
 	kcb->func = func;
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	kgsl_get_fence_info(fence, info_ptr, priv);
+#else
+	kgsl_get_fence_info(fence, priv);
+#endif
 
 	/* if status then error or signaled */
 	status = dma_fence_add_callback(fence, &kcb->fence_cb,
