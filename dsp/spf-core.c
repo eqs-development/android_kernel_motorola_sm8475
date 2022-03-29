@@ -23,7 +23,7 @@
 #include <dsp/spf-core.h>
 #include <dsp/digital-cdc-rsc-mgr.h>
 
-#define APM_STATE_READY_TIMEOUT_MS    10000
+#define APM_STATE_READY_TIMEOUT_MS    20000
 #define Q6_READY_TIMEOUT_MS 1000
 #define APM_CMD_GET_SPF_STATE 0x01001021
 #define APM_CMD_CLOSE_ALL 0x01001013
