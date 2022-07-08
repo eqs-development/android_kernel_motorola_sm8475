@@ -5612,7 +5612,6 @@ static void richtap_erase_work_proc(struct work_struct *work)
 		dev_dbg(chip->dev, "aac fill time %d\n", fill);
 	}
 
-	dev_dbg(chip->dev, "aac richtap 0424 fill=%d，count = %d\n", fill, count);
 	mutex_lock(&chip->play.lock);
 	richtap_clean_buf(chip, MMAP_BUF_DATA_FINISHED);
 	atomic_set(&chip->play.fifo_status.written_done, 1);
@@ -5902,7 +5901,6 @@ static long richtap_file_unlocked_ioctl(struct file *file, unsigned int cmd, uns
 	case RICHTAP_GET_F0:
 		ret = richtap_get_lra_frequency_hz(chip, &tmp);
 		dev_dbg(chip->dev, "aac RichTap get f0 =%d\n", tmp);
-		//tmp = 170; //just for debug,f0 right should remove
 		if (ret < 0) {
 			dev_err(chip->dev, "aac RichTap get f0 error, ret=%d\n", ret);
 			break;
