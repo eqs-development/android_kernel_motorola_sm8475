@@ -157,6 +157,7 @@
 #define AUTORES_EN_DLY_MASK			GENMASK(5, 2)
 #define AUTORES_EN_DLY(cycles)			((cycles) * 2)
 #define AUTORES_EN_DLY_6_CYCLES			AUTORES_EN_DLY(6)
+#define AUTORES_EN_DLY_7_CYCLES			AUTORES_EN_DLY(7)
 #define AUTORES_EN_DLY_SHIFT			2
 #define AUTORES_ERR_WINDOW_MASK			GENMASK(1, 0)
 #define AUTORES_ERR_WINDOW_12P5_PERCENT		0x0
@@ -5295,7 +5296,7 @@ static int haptics_detect_lra_frequency(struct haptics_chip *chip)
 	rc = haptics_masked_write(chip, chip->cfg_addr_base,
 			HAP_CFG_AUTORES_CFG_REG, AUTORES_EN_BIT |
 			AUTORES_EN_DLY_MASK | AUTORES_ERR_WINDOW_MASK,
-			AUTORES_EN_DLY_6_CYCLES << AUTORES_EN_DLY_SHIFT
+			AUTORES_EN_DLY_7_CYCLES << AUTORES_EN_DLY_SHIFT
 			| AUTORES_ERR_WINDOW_50_PERCENT | AUTORES_EN_BIT);
 	if (rc < 0)
 		return rc;
