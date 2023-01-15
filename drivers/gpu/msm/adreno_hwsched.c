@@ -503,7 +503,9 @@ static int hwsched_sendcmds(struct adreno_device *adreno_dev,
 			break;
 		}
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 		drawctxt->submitted_timestamp = timestamp;
+#endif
 
 		count++;
 	}

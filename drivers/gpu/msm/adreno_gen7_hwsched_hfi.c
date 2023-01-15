@@ -128,6 +128,7 @@ static void gen7_receive_ack_async(struct adreno_device *adreno_dev, void *rcvd)
 			MSG_HDR_GET_SEQNUM(waiters[i]));
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 static void log_profiling_info(struct adreno_device *adreno_dev, u32 *rcvd)
 {
 	struct hfi_ts_retire_cmd *cmd = (struct hfi_ts_retire_cmd *)rcvd;
@@ -153,6 +154,7 @@ static void log_profiling_info(struct adreno_device *adreno_dev, u32 *rcvd)
 
 	kgsl_context_put(context);
 }
+#endif
 
 u32 gen7_hwsched_parse_payload(struct payload_section *payload, u32 key)
 {
@@ -380,12 +382,15 @@ void gen7_hwsched_process_msgq(struct adreno_device *adreno_dev)
 		if (MSG_HDR_GET_TYPE(rcvd[0]) == HFI_MSG_ACK) {
 			gen7_receive_ack_async(adreno_dev, rcvd);
 		} else if (MSG_HDR_GET_ID(rcvd[0]) == F2H_MSG_TS_RETIRE) {
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 			log_profiling_info(adreno_dev, rcvd);
+#endif
 			adreno_hwsched_trigger(adreno_dev);
 		}
 	}
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 static void process_log_block(struct adreno_device *adreno_dev, void *data)
 {
 	struct gen7_gmu_device *gmu = to_gen7_gmu(adreno_dev);
@@ -403,6 +408,7 @@ static void process_log_block(struct adreno_device *adreno_dev, void *data)
 		start++;
 	}
 }
+#endif
 
 static void process_dbgq_irq(struct adreno_device *adreno_dev)
 {
@@ -418,11 +424,13 @@ static void process_dbgq_irq(struct adreno_device *adreno_dev)
 			break;
 		}
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 		if (MSG_HDR_GET_ID(rcvd[0]) == F2H_MSG_DEBUG)
 			adreno_gen7_receive_debug_req(gmu, rcvd);
 
 		if (MSG_HDR_GET_ID(rcvd[0]) == F2H_MSG_LOG_BLOCK)
 			process_log_block(adreno_dev, rcvd);
+#endif
 	}
 
 	if (!recovery)
@@ -1230,6 +1238,7 @@ void gen7_hwsched_hfi_remove(struct adreno_device *adreno_dev)
 	kthread_stop(hw_hfi->f2h_task);
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 static void add_profile_events(struct adreno_device *adreno_dev,
 	struct kgsl_drawobj *drawobj, struct adreno_submit_time *time)
 {
@@ -1281,6 +1290,7 @@ static void add_profile_events(struct adreno_device *adreno_dev,
 	log_kgsl_cmdbatch_submitted_event(context->id, drawobj->timestamp,
 			context->priority, drawobj->flags);
 }
+#endif
 
 static u32 get_next_dq(u32 priority)
 {
@@ -1427,7 +1437,9 @@ int gen7_hwsched_submit_cmdobj(struct adreno_device *adreno_dev,
 	u32 cmd_sizebytes;
 	struct kgsl_drawobj *drawobj = DRAWOBJ(cmdobj);
 	struct hfi_submit_cmd *cmd;
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	struct adreno_submit_time time = {0};
+#endif
 	static void *cmdbuf;
 
 	if (cmdbuf == NULL) {
@@ -1470,7 +1482,9 @@ int gen7_hwsched_submit_cmdobj(struct adreno_device *adreno_dev,
 	if ((drawobj->flags & KGSL_DRAWOBJ_PROFILING) &&
 		cmdobj->profiling_buf_entry) {
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 		time.drawobj = drawobj;
+#endif
 
 		cmd->profile_gpuaddr_lo =
 			lower_32_bits(cmdobj->profiling_buffer_gpuaddr);
@@ -1495,16 +1509,20 @@ skipib:
 	if (ret)
 		return ret;
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	add_profile_events(adreno_dev, drawobj, &time);
 
 	cmdobj->submit_ticks = time.ticks;
+#endif
 
 	/* Send interrupt to GMU to receive the message */
 	gmu_core_regwrite(KGSL_DEVICE(adreno_dev), GEN7_GMU_HOST2GMU_INTR_SET,
 		DISPQ_IRQ_BIT(drawobj->context->gmu_dispatch_queue));
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	/* Put the profiling information in the user profiling buffer */
 	adreno_profile_submit_time(&time);
+#endif
 
 	return ret;
 }

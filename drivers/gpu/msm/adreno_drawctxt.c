@@ -26,6 +26,7 @@ static int _check_context_timestamp(struct kgsl_device *device,
 	return kgsl_check_timestamp(device, context, timestamp);
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 /**
  * adreno_drawctxt_dump() - dump information about a draw context
  * @device: KGSL device that owns the context
@@ -122,6 +123,7 @@ stats:
 
 	spin_unlock_bh(&drawctxt->lock);
 }
+#endif
 
 /**
  * adreno_drawctxt_wait() - sleep until a timestamp expires
