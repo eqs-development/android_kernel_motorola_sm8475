@@ -15,6 +15,15 @@
 
 #include <linux/tracepoint.h>
 
+#ifndef CONFIG_QCOM_KGSL_DEBUG
+#undef DEFINE_EVENT
+#undef TRACE_EVENT
+#undef DECLARE_EVENT_CLASS
+#define DEFINE_EVENT DEFINE_EVENT_NOP
+#define TRACE_EVENT TRACE_EVENT_NOP
+#define DECLARE_EVENT_CLASS DECLARE_EVENT_CLASS_NOP
+#endif
+
 DECLARE_EVENT_CLASS(gpu_work_period_class,
 
 	TP_PROTO(u32 gpu_id, u32 uid, u64 start_time_ns,

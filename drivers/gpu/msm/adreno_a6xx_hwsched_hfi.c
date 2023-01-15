@@ -134,6 +134,7 @@ static void a6xx_receive_ack_async(struct adreno_device *adreno_dev, void *rcvd)
 			MSG_HDR_GET_SEQNUM(waiters[i]));
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 static void log_profiling_info(struct adreno_device *adreno_dev, u32 *rcvd)
 {
 	struct hfi_ts_retire_cmd *cmd = (struct hfi_ts_retire_cmd *)rcvd;
@@ -170,6 +171,7 @@ static void log_profiling_info(struct adreno_device *adreno_dev, u32 *rcvd)
 
 	kgsl_context_put(context);
 }
+#endif
 
 u32 a6xx_hwsched_parse_payload(struct payload_section *payload, u32 key)
 {
@@ -505,7 +507,9 @@ static void a6xx_hwsched_process_msgq(struct adreno_device *adreno_dev)
 			a6xx_receive_ack_async(adreno_dev, rcvd);
 		} else if (MSG_HDR_GET_ID(rcvd[0]) == F2H_MSG_TS_RETIRE) {
 			adreno_hwsched_trigger(adreno_dev);
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 			log_profiling_info(adreno_dev, rcvd);
+#endif
 		}
 	}
 	mutex_unlock(&hw_hfi->msgq_mutex);
@@ -1501,6 +1505,7 @@ void a6xx_hwsched_hfi_remove(struct adreno_device *adreno_dev)
 		kthread_stop(hw_hfi->f2h_task);
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 static void a6xx_add_profile_events(struct adreno_device *adreno_dev,
 	struct kgsl_drawobj_cmd *cmdobj, struct adreno_submit_time *time)
 {
@@ -1561,6 +1566,7 @@ static void a6xx_add_profile_events(struct adreno_device *adreno_dev,
 	log_kgsl_cmdbatch_submitted_event(context->id, drawobj->timestamp,
 		context->priority, drawobj->flags);
 }
+#endif
 
 static u32 get_next_dq(u32 priority)
 {
@@ -1716,7 +1722,9 @@ static int a6xx_hfi_dispatch_queue_write(struct adreno_device *adreno_dev, uint3
 	uint32_t i, write, empty_space;
 	uint32_t size_dwords = size_bytes >> 2;
 	u32 align_size = ALIGN(size_dwords, SZ_4);
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	uint32_t id = MSG_HDR_GET_ID(*msg);
+#endif
 
 	if (hdr->status == HFI_QUEUE_STATUS_DISABLED || !IS_ALIGNED(size_bytes, sizeof(u32)))
 		return -EINVAL;
@@ -1751,6 +1759,7 @@ static int a6xx_hfi_dispatch_queue_write(struct adreno_device *adreno_dev, uint3
 	if (!cmdobj)
 		goto done;
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	a6xx_add_profile_events(adreno_dev, cmdobj, time);
 
 	/*
@@ -1760,9 +1769,12 @@ static int a6xx_hfi_dispatch_queue_write(struct adreno_device *adreno_dev, uint3
 	 * packet before the profile data is written out.
 	 */
 	adreno_profile_submit_time(time);
+#endif
 
 done:
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	trace_kgsl_hfi_send(id, size_dwords, MSG_HDR_GET_SEQNUM(*msg));
+#endif
 
 	hfi_update_write_idx(&hdr->write_index, write);
 
@@ -1776,7 +1788,9 @@ int a6xx_hwsched_submit_drawobj(struct adreno_device *adreno_dev,
 	u32 cmd_sizebytes, seqnum;
 	struct kgsl_drawobj_cmd *cmdobj = CMDOBJ(drawobj);
 	struct hfi_submit_cmd *cmd;
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	struct adreno_submit_time time = {0};
+#endif
 	static void *cmdbuf;
 
 	if (cmdbuf == NULL) {
@@ -1819,7 +1833,9 @@ int a6xx_hwsched_submit_drawobj(struct adreno_device *adreno_dev,
 	if ((drawobj->flags & KGSL_DRAWOBJ_PROFILING) &&
 		cmdobj->profiling_buf_entry) {
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 		time.drawobj = drawobj;
+#endif
 
 		cmd->profile_gpuaddr_lo =
 			lower_32_bits(cmdobj->profiling_buffer_gpuaddr);
@@ -1839,7 +1855,13 @@ skipib:
 
 	ret = a6xx_hfi_dispatch_queue_write(adreno_dev,
 		HFI_DSP_ID_0 + drawobj->context->gmu_dispatch_queue,
-		(u32 *)cmd, cmd_sizebytes, cmdobj, &time);
+		(u32 *)cmd, cmd_sizebytes, cmdobj,
+#ifdef CONFIG_QCOM_KGSL_DEBUG
+		&time
+#else
+		NULL
+#endif
+		);
 	if (ret)
 		return ret;
 

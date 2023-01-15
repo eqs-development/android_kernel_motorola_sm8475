@@ -7,6 +7,7 @@
 #ifndef _KGSL_EVENTLOG_H
 #define _KGSL_EVENTLOG_H
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 void kgsl_eventlog_init(void);
 void kgsl_eventlog_exit(void);
 
@@ -20,4 +21,20 @@ void log_kgsl_timeline_fence_alloc_event(u32 id, u64 seqno);
 void log_kgsl_timeline_fence_release_event(u32 id, u64 seqno);
 size_t kgsl_snapshot_eventlog_buffer(struct kgsl_device *device,
 	u8 *buf, size_t remain, void *priv);
+#else
+static inline void kgsl_eventlog_init(void) { }
+static inline void kgsl_eventlog_exit(void) { }
+
+static inline void log_kgsl_fire_event(u32 id, u32 ts, u32 type, u32 age) { }
+static inline void log_kgsl_cmdbatch_submitted_event(u32 id, u32 ts, u32 prio, u64 flags) { }
+static inline void log_kgsl_cmdbatch_retired_event(u32 id, u32 ts, u32 prio, u64 flags,
+        u64 start, u64 retire) { }
+static inline void log_kgsl_syncpoint_fence_event(u32 id, char *fence_name) { }
+static inline void log_kgsl_syncpoint_fence_expire_event(u32 id, char *fence_name) { }
+static inline void log_kgsl_timeline_fence_alloc_event(u32 id, u64 seqno) { }
+static inline void log_kgsl_timeline_fence_release_event(u32 id, u64 seqno) { }
+static inline size_t kgsl_snapshot_eventlog_buffer(struct kgsl_device *device,
+	u8 *buf, size_t remain, void *priv) { return 0; }
+#endif
+
 #endif
