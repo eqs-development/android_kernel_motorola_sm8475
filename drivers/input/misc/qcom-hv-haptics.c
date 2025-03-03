@@ -3261,9 +3261,9 @@ static irqreturn_t fifo_empty_irq_handler(int irq, void *data)
 		return IRQ_HANDLED;
 
 #ifdef CONFIG_RICHTAP_FOR_PMIC_ENABLE
-	if (!(val & FIFO_EMPTY_BIT)) {
+	if (atomic_read(&chip->richtap_mode) && !(val & FIFO_EMPTY_BIT)) {
 		haptics_get_fifo_fill_status(chip, &fill);
-		if ((atomic_read(&chip->richtap_mode)) && (fill < 24))
+		if (fill < 24)
 			schedule_work(&chip->richtap_erase_work);
 		return IRQ_HANDLED;
 	}
